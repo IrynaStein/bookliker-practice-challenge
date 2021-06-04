@@ -21,18 +21,10 @@ function renderBooks(data) {
     })
 }
 
-// function userList(bookObj){
-//     bookObj['users'].map((user) => {
-//         const li = document.createElement('li')
-//         li.innerText = user.username
-//         
-//         usersUl.appendChild(li)
-//         return li
-//     })
-// }
 
 function showBookdetails(bookObj) {
     showPanel.innerHTML = ""
+    const bookId = bookObj['id']
     const title = document.createElement('h2')
     title.innerText = bookObj['title']
     const author = document.createElement('h3')
@@ -46,55 +38,64 @@ function showBookdetails(bookObj) {
     const usersUl = document.createElement('ul')
     let userNames = []
     bookObj.users.map(user => listUsers(user, usersUl, userNames))
-
-    // bookObj.users.map(user => {
-    //     const userLi = document.createElement('li')
-    //     userLi.innerText = user.username
-    //     usersUl.append(userLi)
-    //     userNames.push({
-    //         "id": user.id,
-    //         "username": user.username
-    //     })
-    //     return usersUl;
-    // })
     console.log(userNames)
     let button = document.createElement('button')
     button.innerHTML = `<id ="like-btn">LIKE`
     showPanel.append(title, img, author, subtitle, p, usersUl, button)
-    button.addEventListener('click', () => likeBook(userNames))
+    button.addEventListener('click', () => likeBook(userNames, bookId))
 }
 
-function listUsers(user, ul, userNames) {
+function listUsers(user, usersUl, userNames) {
     const userLi = document.createElement('li');
     userLi.innerText = user.username;
-    ul.append(userLi)
+    usersUl.append(userLi)
     userNames.push({
         "id": user.id,
         "username": user.username
     })
-    return ul
+    return usersUl
 }
 
-function likeBook() {
+function likeBook(userNames, bookId) {
     let button = document.querySelector("#show-panel > button > id")
     let me = { "id": 1, "username": "pouros" }
+
     if (button.innerText === "LIKE") {
         button.innerHTML = "UNLIKE"
-        //appned li to the ul
+        userNames.push(me)
+        updateUserLikes(bookId, userNames)
+        //append li to the ul
         console.log(`${me.username} liked this book`)
     }
     else {
         button.innerHTML = "LIKE"
+        userNames.pop()
         //remove name from the ul
+        updateUserLikes(bookId, userNames)
         console.log(`${me.username} unliked this book`)
     }
-
+    console.log(userNames)
 }
 //fetch POST request function
-// fetch(http://localhost:3000/books/:id ,{
-    //         method: 'PATCH',
-    // body: JSON.stringify({ // add userNames object + me object and send it 
 
-    // })
-    //     }
+function updateUserLikes(bookId, userNames) {
+    return fetch(`http://localhost:3000/books/${bookId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            // pass the updated list of users
+            "users": userNames
+        })   
+    })
+    .then(resp=>resp.json())
+    .then(data => listMyname(data))
+}
 
+function listMyname(data){
+    const userLi = document.createElement('li');
+    userLi.innerText = data.users.slice(-1)[0].username// adding name to the DOM
+    document.querySelector("#show-panel > ul").appendChild(userLi) 
+}
